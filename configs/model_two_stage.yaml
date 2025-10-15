@@ -1,0 +1,8 @@
+window_len: 60
+forecaster_hidden_dim: 64
+lr: 1e-3
+batch_size: 256
+epochs: 20
+allocator: "long_only_min_vol_with_caps"
+shrinkage_alpha: 0.1
+

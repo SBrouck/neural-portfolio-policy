@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# PyTorch - exclude all trained models (too large for GitHub)
+*.pt
+*.pth
+# Keep models directory structure
+!out/models/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data - exclude large files
+data/raw/
+data/processed/*.parquet
+data/oracle/*.parquet
+data/rf/*.parquet
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/oracle/.gitkeep
+!data/rf/.gitkeep
+
+# Outputs - keep structure but not all outputs
+out/reports/*.csv
+out/reports/*.txt
+!out/reports/.gitkeep
+
+# Temporary
+*.log
+nohup.out
+.cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+

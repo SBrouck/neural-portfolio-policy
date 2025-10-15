@@ -1,0 +1,14 @@
+seed: 20251014
+rebalance: "W-FRI"           # weekly on Friday
+cost_bps_per_side: 10
+max_weight_per_asset: 0.20
+vol_target_ann: 0.10
+train_start: "2007-01-01"
+train_end:   "2017-12-31"
+val_start:   "2018-01-01"
+val_end:     "2020-12-31"
+test_start:  "2021-01-01"
+test_end:    "2025-10-14"
+embargo_days: 5
+business_days_per_year: 252
+

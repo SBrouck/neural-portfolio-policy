@@ -1,0 +1,15 @@
+window_len: 60
+features: ["ret_1d","ret_5d","ret_20d","ewma_vol","mom_12m_z","mom_12m_rank"]
+hidden_dim: 64
+tcn_blocks: 2
+kernel_size: 5
+dropout: 0.10
+use_attention: true
+lambda_turn: 2.0
+lambda_cvar: 0.5
+alpha_cvar: 0.95
+lr: 1e-3
+batch_size: 128
+epochs: 20
+early_stopping_patience: 3
+

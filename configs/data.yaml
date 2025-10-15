@@ -1,0 +1,8 @@
+source: yahoo
+start_date: "2005-01-01"
+end_date: "2025-12-31"
+nyse_only: true
+cache: true
+risk_free: "DTB3"         # FRED 3M T-bill, fallback to ^IRX if FRED blocked
+business_days_per_year: 252
+

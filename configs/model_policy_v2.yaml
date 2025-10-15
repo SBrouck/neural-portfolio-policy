@@ -1,0 +1,40 @@
+window_len: 60
+
+# Pragmatic feature set - no heavy computation
+features:
+  # Returns at multiple horizons
+  - ret_1d
+  - ret_5d
+  - ret_20d
+  # Volatility (EWMA is fast and robust)
+  - ewma_vol
+  # Momentum (proven signal)
+  - mom_12m_z
+  - mom_12m_rank
+  # Asymmetry (skew is fast, 60d window)
+  - skew_60d
+  # Local drawdown (fast, 252d window but doesn't create NaN)
+  - drawdown_local
+  # Cross-sectional dispersion (fast, 20d window)
+  - dispersion
+  # Vol regime (fast, 20/60d windows)
+  - vol_regime
+
+# Model architecture
+hidden_dim: 64
+tcn_blocks: 2
+kernel_size: 5
+dropout: 0.10
+use_attention: true
+
+# Loss function
+lambda_turn: 2.0
+lambda_cvar: 0.5
+alpha_cvar: 0.95
+
+# Training
+lr: 1e-3
+batch_size: 128
+epochs: 30
+early_stopping_patience: 5
+

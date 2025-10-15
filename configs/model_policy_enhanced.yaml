@@ -1,0 +1,40 @@
+window_len: 60
+
+# Enhanced risk-oriented features
+features:
+  # Returns at multiple horizons
+  - ret_1d
+  - ret_5d
+  - ret_20d
+  # Volatility
+  - ewma_vol
+  # Momentum
+  - mom_12m_z
+  - mom_12m_rank
+  # NEW: Asymmetry and tail risk
+  - skew_60d
+  - drawdown_local
+  # NEW: Cross-sectional structure
+  - corr_avg
+  - pca_market
+  - dispersion
+  - vol_regime
+
+# Model architecture
+hidden_dim: 64
+tcn_blocks: 2
+kernel_size: 5
+dropout: 0.10
+use_attention: true
+
+# Loss function
+lambda_turn: 2.0
+lambda_cvar: 0.5
+alpha_cvar: 0.95
+
+# Training
+lr: 1e-3
+batch_size: 128
+epochs: 30
+early_stopping_patience: 5
+

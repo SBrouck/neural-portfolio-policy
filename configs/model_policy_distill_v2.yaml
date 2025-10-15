@@ -1,0 +1,37 @@
+window_len: 60
+
+# Enhanced features
+features:
+  - ret_1d
+  - ret_5d
+  - ret_20d
+  - ewma_vol
+  - mom_12m_z
+  - mom_12m_rank
+  - skew_60d
+  - drawdown_local
+  - dispersion
+  - vol_regime
+
+# INCREASED MODEL CAPACITY for better distillation
+hidden_dim: 128  # 64 → 128
+tcn_blocks: 3    # 2 → 3
+kernel_size: 5
+dropout: 0.15    # 0.10 → 0.15 (more regularization)
+use_attention: true
+
+# Distillation hyperparams
+distill_lr: 3e-4  # Lower than before (5e-4)
+lambda_l1: 0.05   # Reduced L1 penalty
+distill_epochs: 100  # 50 → 100
+distill_patience: 10  # 5 → 10
+
+# Fine-tuning hyperparams
+lambda_turn: 1.0    # 2.0 → 1.0 (less aggressive)
+lambda_cvar: 0.3    # 0.5 → 0.3
+alpha_cvar: 0.95
+lr: 1e-4           # Lower for fine-tuning
+batch_size: 64     # 128 → 64 (smaller for stability)
+epochs: 50         # 30 → 50
+early_stopping_patience: 10  # 5 → 10
+
