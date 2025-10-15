@@ -247,10 +247,9 @@ lambda_cvar: 0.0  # Disable CVaR if unstable
 ## Support
 
 **Issues:** https://github.com/SBrouck/FINNET-Port-weights-opt/issues  
-**Contact:** sachabrouck@example.com
+**Contact:** sbrouck.org I sbrouck@uw.edu
 
 ---
 
-**Time to Results:** < 1 minute  
-**Model Quality:** Publication-ready ✅  
+**Time to Results:** < 1 minute   
 **Rank:** #2 out of 7 strategies
