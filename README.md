@@ -465,7 +465,6 @@ MIT License - see LICENSE file for details
 GitHub: [@SBrouck](https://github.com/SBrouck)
 
 ---
-
-**Status:** ✅ Production-ready  
+ 
 **Last Updated:** October 14, 2025  
 **Version:** 1.0.0
