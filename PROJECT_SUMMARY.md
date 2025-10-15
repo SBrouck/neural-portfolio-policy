@@ -46,10 +46,10 @@ This project implements a **Temporal Convolutional Network (TCN)** for learning 
 ### 2. Extensibility
 
 Unlike rule-based methods (Momentum, Equal Weight), TCN Enhanced:
-- ✅ Accepts custom features (proprietary signals, alternative data)
-- ✅ Adapts to new market regimes via retraining
-- ✅ Enables online learning with parameter anchoring
-- ✅ Generalizes to new asset universes
+- Accepts custom features (proprietary signals, alternative data)
+- Adapts to new market regimes via retraining
+- Enables online learning with parameter anchoring
+- Generalizes to new asset universes
 
 ### 3. Risk Management
 
@@ -124,13 +124,13 @@ where R_p = w^T·r - c·|w - w_prev|
 ### Baselines Comparison
 
 TCN Enhanced beats:
-- ✅ Equal Weight (+0.7% Sharpe)
-- ✅ SPY Only (+9.5%)
-- ✅ Risk Parity (+26.3%)
-- ✅ Min Variance (+62.5%)
+- Equal Weight (+0.7% Sharpe)
+- SPY Only (+9.5%)
+- Risk Parity (+26.3%)
+- Min Variance (+62.5%)
 
 Loses to:
-- ⚠️ Momentum (-5.5%)
+- Momentum (-5.5%)
 
 ---
 
@@ -197,11 +197,11 @@ Distillation + Fine-tuning showed promise but:
 
 ## Scientific Contributions
 
-1. ✅ **Risk-oriented feature engineering** for portfolio policy learning
-2. ✅ **Rigorous validation** with excess Sharpe vs DTB3, purged splits, transaction costs
-3. ✅ **Curriculum learning framework** (distillation → fine-tuning, proof-of-concept)
-4. ✅ **Honest assessment** of deep learning vs classical methods
-5. ✅ **Production-ready code** (PyTorch, modular, documented)
+1. **Risk-oriented feature engineering** for portfolio policy learning
+2. **Rigorous validation** with excess Sharpe vs DTB3, purged splits, transaction costs
+3. **Curriculum learning framework** (distillation → fine-tuning, proof-of-concept)
+4. **Honest assessment** of deep learning vs classical methods
+5. **Production-ready code** (PyTorch, modular, documented)
 
 ---
 
@@ -279,7 +279,7 @@ The curriculum learning approach (distillation → fine-tuning) shows promise bu
 
 ---
 
-**Status:** ✅ Production-ready  
+**Status:** Production-ready  
 **Recommended Model:** `out/models/tcn_policy_enhanced.pt`  
 **Performance:** Rank #2/7, Excess Sharpe 0.519, Turnover 0.82%
 
