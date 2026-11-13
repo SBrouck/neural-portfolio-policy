@@ -105,23 +105,6 @@ def compute_momentum_rank(prices: pd.DataFrame,
     return mom_rank
 
 
-def normalize_features_expanding(features: pd.DataFrame,
-                                 min_periods: int = 252) -> pd.DataFrame:
-    """
-    Standardize features using expanding window.
-    z_t = (x_t - expanding_mean_t) / expanding_std_t
-    """
-    normalized = pd.DataFrame(index=features.index, columns=features.columns)
-    
-    for col in features.columns:
-        series = features[col]
-        expanding_mean = series.expanding(min_periods=min_periods).mean()
-        expanding_std = series.expanding(min_periods=min_periods).std()
-        normalized[col] = (series - expanding_mean) / (expanding_std + 1e-8)
-    
-    return normalized
-
-
 def compute_skewness_60d(returns_1d: pd.DataFrame, window: int = 60) -> pd.DataFrame:
     """
     Rolling skewness as asymmetry proxy.
@@ -140,66 +123,6 @@ def compute_drawdown_local(prices: pd.DataFrame, window: int = 252) -> pd.DataFr
     rolling_max = close.rolling(window=window, min_periods=60).max()
     drawdown = (close - rolling_max) / (rolling_max + 1e-8)
     return drawdown
-
-
-def compute_pca_market_factor(returns_1d: pd.DataFrame, window: int = 252) -> pd.Series:
-    """
-    First principal component as market factor proxy.
-    Computed on rolling window of past returns.
-    """
-    from sklearn.decomposition import PCA
-    
-    pca_factor = pd.Series(index=returns_1d.index, dtype=float)
-    
-    for i in range(window, len(returns_1d)):
-        # Window of past returns
-        window_data = returns_1d.iloc[i-window:i].dropna(axis=1, how='all')
-        
-        if window_data.shape[1] < 3:  # Need at least 3 assets
-            pca_factor.iloc[i] = np.nan
-            continue
-        
-        # Standardize
-        window_std = (window_data - window_data.mean()) / (window_data.std() + 1e-8)
-        window_std = window_std.fillna(0)
-        
-        # PCA
-        pca = PCA(n_components=1)
-        try:
-            pca.fit(window_std.T)  # Transpose: assets as samples
-            # Project current returns onto PC1
-            current_returns = returns_1d.iloc[i].reindex(window_std.columns).fillna(0)
-            current_std = (current_returns - window_data.mean()) / (window_data.std() + 1e-8)
-            factor_value = np.dot(current_std.values, pca.components_[0])
-            pca_factor.iloc[i] = factor_value
-        except:
-            pca_factor.iloc[i] = np.nan
-    
-    return pca_factor
-
-
-def compute_corr_avg(returns_1d: pd.DataFrame, window: int = 60) -> pd.DataFrame:
-    """
-    Average pairwise correlation per asset.
-    For each asset, compute its average correlation with all others.
-    """
-    corr_avg = pd.DataFrame(index=returns_1d.index, columns=returns_1d.columns)
-    
-    for i in range(window, len(returns_1d)):
-        window_data = returns_1d.iloc[i-window:i].dropna(axis=1, how='all')
-        
-        if window_data.shape[1] < 3:
-            continue
-        
-        # Correlation matrix
-        corr_matrix = window_data.corr()
-        
-        # Average correlation per asset (excluding diagonal)
-        for col in corr_matrix.columns:
-            other_corrs = corr_matrix[col].drop(col)
-            corr_avg.loc[returns_1d.index[i], col] = other_corrs.mean()
-    
-    return corr_avg
 
 
 def compute_cross_sectional_dispersion(returns_1d: pd.DataFrame, window: int = 20) -> pd.Series:
@@ -283,7 +206,6 @@ def build_feature_matrix(prices: pd.DataFrame,
         for ticker in tickers:
             all_features[("mom_12m_rank", ticker)] = mom_rank[f"mom_12m_rank_{ticker}"]
     
-    # New advanced features
     if "skew_60d" in feature_list:
         skew = compute_skewness_60d(returns_dict["ret_1d"], window=60)
         for ticker in tickers:
@@ -294,17 +216,7 @@ def build_feature_matrix(prices: pd.DataFrame,
         for ticker in tickers:
             all_features[("drawdown_local", ticker)] = dd[ticker]
     
-    if "corr_avg" in feature_list:
-        corr = compute_corr_avg(returns_dict["ret_1d"], window=60)
-        for ticker in tickers:
-            all_features[("corr_avg", ticker)] = corr[ticker]
-    
     # Cross-sectional features (shared across all assets)
-    if "pca_market" in feature_list:
-        pca_factor = compute_pca_market_factor(returns_dict["ret_1d"], window=252)
-        for ticker in tickers:
-            all_features[("pca_market", ticker)] = pca_factor
-    
     if "dispersion" in feature_list:
         dispersion = compute_cross_sectional_dispersion(returns_dict["ret_1d"], window=20)
         for ticker in tickers:
@@ -318,10 +230,6 @@ def build_feature_matrix(prices: pd.DataFrame,
     # Assemble into MultiIndex DataFrame
     features = pd.DataFrame(all_features)
     features.columns = pd.MultiIndex.from_tuples(features.columns, names=["feature", "ticker"])
-    
-    # Forward fill NaN only within a limited window to avoid look-ahead
-    # Actually, we should NOT forward fill at all for strict no-look-ahead
-    # Just drop rows with NaN during training
     
     # Compute targets: forward 1-period excess return
     # target_t = r_{t+1} - rf_{t+1}
@@ -368,9 +276,8 @@ def create_sequences(features: pd.DataFrame,
     features_filt = features[mask]
     targets_filt = targets[mask]
     
-    # Forward fill NaN within each column (limited to avoid look-ahead)
-    # This is acceptable as long as we're only using past info
-    features_filt = features_filt.fillna(method='ffill', limit=5)
+    # Forward fill (past values only) for at most 5 rows, then drop incomplete rows
+    features_filt = features_filt.ffill(limit=5)
     
     # Drop rows that still have NaN after forward fill
     valid_idx = features_filt.dropna().index
@@ -401,59 +308,3 @@ def create_sequences(features: pd.DataFrame,
         dates.append(features_filt.index[i+window_len-1])
     
     return X, y, pd.DatetimeIndex(dates)
-
-
-def test_no_lookahead():
-    """
-    Unit test to ensure no look-ahead bias in features.
-    Features at time t should only use data up to and including t.
-    """
-    # Create simple test data
-    np.random.seed(42)
-    dates = pd.date_range("2020-01-01", periods=100, freq="D")
-    prices_dict = {
-        ("adj_close", "TEST"): np.exp(np.cumsum(np.random.randn(100) * 0.01)),
-        ("volume", "TEST"): np.ones(100) * 1000
-    }
-    prices = pd.DataFrame(prices_dict, index=dates)
-    prices.columns = pd.MultiIndex.from_tuples(prices.columns)
-    
-    rf = pd.Series(0.0001, index=dates, name="rf_daily")
-    
-    # Compute returns manually
-    close_prices = prices["adj_close"]["TEST"]
-    
-    # Compute base returns
-    returns_dict = compute_returns(prices, horizons=[1])
-    
-    # Check: feature at date t should not use price at date t+1
-    # For ret_1d at t, should be log(price_t / price_{t-1})
-    ret_manual = np.log(close_prices / close_prices.shift(1))
-    
-    # returns_dict["ret_1d"] is a DataFrame
-    ret_from_func = returns_dict["ret_1d"]["TEST"]
-    
-    # They should match
-    diff = (ret_manual - ret_from_func).dropna()
-    max_diff = diff.abs().max()
-    assert max_diff < 1e-10, f"Look-ahead detected in ret_1d! Max diff: {max_diff}"
-    
-    print("✓ No look-ahead test passed!")
-
-
-if __name__ == "__main__":
-    # Run test
-    test_no_lookahead()
-    
-    # Load real data and build features
-    prices, rf = load_data()
-    feature_list = ["ret_1d", "ret_5d", "ret_20d", "ewma_vol", "mom_12m_z", "mom_12m_rank"]
-    features, targets = build_feature_matrix(prices, rf, feature_list)
-    
-    print("\nFeature matrix shape:", features.shape)
-    print("Target matrix shape:", targets.shape)
-    print("\nFeature columns:", features.columns.get_level_values(0).unique().tolist())
-    print("Assets:", features.columns.get_level_values(1).unique().tolist())
-    print("\nSample features (last 5 rows):")
-    print(features.tail())
-

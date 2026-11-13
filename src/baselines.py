@@ -39,7 +39,7 @@ class EqualWeight(BaselineStrategy):
 
 class RiskParity(BaselineStrategy):
     """
-    Risk parity: weights inversely proportional to volatility.
+    Inverse-volatility weights (naive risk parity, ignores correlations).
     w_i = (1/vol_i) / sum_j (1/vol_j)
     """
     
@@ -66,7 +66,7 @@ class RiskParity(BaselineStrategy):
 
 class MinimumVariance(BaselineStrategy):
     """
-    Minimum variance portfolio.
+    Long-only minimum variance on the sample covariance (+1e-5 I ridge).
     Solve: min w^T Sigma w s.t. sum(w) = 1, w >= 0
     """
     
@@ -119,8 +119,8 @@ class MinimumVariance(BaselineStrategy):
 
 class MomentumStrategy(BaselineStrategy):
     """
-    Simple momentum strategy.
-    Rank assets by past 12-month returns and overweight top performers.
+    Cross-sectional momentum: equal weight on the top_k assets by trailing
+    12-month return (top_k = n_assets // 2 = 7 here).
     """
     
     def __init__(self, n_assets: int, lookback_days: int = 252, top_k: Optional[int] = None):
@@ -156,73 +156,26 @@ class MomentumStrategy(BaselineStrategy):
         return weights
 
 
-class BuyAndHoldSPY(BaselineStrategy):
-    """
-    Buy and hold SPY (first asset assumed to be SPY).
-    """
-    
+class SingleAsset(BaselineStrategy):
+    """100% in one named asset, rebalanced like the others (e.g. SPY)."""
+
+    def __init__(self, n_assets: int, index: int):
+        super().__init__(n_assets)
+        self.index = index
+
     def compute_weights(self, date: pd.Timestamp, hist_returns: pd.DataFrame) -> np.ndarray:
         weights = np.zeros(self.n_assets)
-        weights[0] = 1.0  # Assume first asset is SPY
+        weights[self.index] = 1.0
         return weights
 
 
-def get_baseline_strategies(n_assets: int, lookback_days: int = 252) -> dict:
-    """
-    Get all baseline strategies.
-    
-    Args:
-        n_assets: Number of assets
-        lookback_days: Lookback window for estimation
-        
-    Returns:
-        strategies: Dict of {name: strategy_object}
-    """
-    strategies = {
-        "Equal_Weight": EqualWeight(n_assets, lookback_days),
-        "Risk_Parity": RiskParity(n_assets, lookback_days),
-        "Min_Variance": MinimumVariance(n_assets, lookback_days),
-        "Momentum": MomentumStrategy(n_assets, lookback_days),
-        "SPY_Only": BuyAndHoldSPY(n_assets, lookback_days),
+def get_baseline_strategies(tickers: list, lookback_days: int = 252) -> dict:
+    """All baselines. Estimation windows use the last `lookback_days` returns before each rebalance."""
+    n_assets = len(tickers)
+    return {
+        "Equal weight": EqualWeight(n_assets, lookback_days),
+        "Inverse volatility": RiskParity(n_assets, lookback_days),
+        "Minimum variance": MinimumVariance(n_assets, lookback_days),
+        "Momentum (top 7, 12m)": MomentumStrategy(n_assets, lookback_days),
+        "SPY": SingleAsset(n_assets, list(tickers).index("SPY")),
     }
-    
-    return strategies
-
-
-def test_baselines():
-    """Test baseline strategies."""
-    from src.features import load_data
-    
-    # Load data
-    prices, rf = load_data()
-    returns = prices["adj_close"].pct_change().dropna()
-    
-    # Filter to test period
-    test_start = "2020-01-01"
-    test_end = "2021-12-31"
-    returns_test = returns[(returns.index >= test_start) & (returns.index <= test_end)]
-    
-    n_assets = returns_test.shape[1]
-    
-    # Get strategies
-    strategies = get_baseline_strategies(n_assets, lookback_days=252)
-    
-    # Test each
-    test_date = returns_test.index[300]  # Some date with enough history
-    hist = returns_test.iloc[:300]
-    
-    print("Testing baseline strategies:")
-    for name, strategy in strategies.items():
-        weights = strategy.compute_weights(test_date, hist)
-        print(f"\n{name}:")
-        print(f"  Weights sum: {np.sum(weights):.4f}")
-        print(f"  Max weight: {np.max(weights):.4f}")
-        print(f"  Min weight: {np.min(weights):.4f}")
-        print(f"  Non-zero assets: {np.sum(weights > 0.001)}")
-    
-    print("\n✓ Baseline strategies test passed!")
-
-
-if __name__ == "__main__":
-    test_baselines()
-

@@ -1,0 +1,2 @@
+# 15 liquid US-listed ETFs: equities, bonds, credit, commodities, real estate, dollar
+universe: [SPY, QQQ, IWM, EFA, EEM, TLT, TIP, LQD, HYG, GLD, SLV, DBC, USO, VNQ, UUP]
